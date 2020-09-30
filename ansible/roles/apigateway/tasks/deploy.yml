@@ -17,6 +17,10 @@
 ---
 # This role will install apigateway
 
+- name: apigateway debug
+  debug:
+    msg: "Image: {{ apigateway.docker_image | default('openwhisk/apigateway:' ~ apigateway.version) }}"
+
 - name: (re)start apigateway
   docker_container:
     name: apigateway

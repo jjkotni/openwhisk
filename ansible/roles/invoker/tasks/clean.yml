@@ -51,7 +51,8 @@
   failed_when: False
 
 - name: remove remaining actions
-  shell: "docker rm -f $(docker ps -aq --filter name=wsk{{ invoker_index }})"
+  # shell: "docker rm -f $(docker ps -aq --filter name=wsk{{ invoker_index }})"
+  shell: "echo hi"
   failed_when: False
 
 - name: remove invoker log directory

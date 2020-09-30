@@ -53,7 +53,7 @@ class YARNTask(override protected val id: ContainerId,
                yarnComponentActor: ActorRef)
     extends Container {
 
-  val containerRemoveTimeoutMS = 60000
+  val containerRemoveTimeoutMS = 6000
 
   /** Stops the container from consuming CPU cycles. */
   override def suspend()(implicit transid: TransactionId): Future[Unit] = {
