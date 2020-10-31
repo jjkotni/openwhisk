@@ -86,6 +86,20 @@
                 }
             },
             {
+                "kind": "python:mlperf",
+                "default": false,
+                "image": {
+                    "prefix": "openwhisk",
+                    "name": "mlperfaction",
+                    "tag": "latest"
+                },
+                "deprecated": false,
+                "attached": {
+                    "attachmentName": "codefile",
+                    "attachmentType": "text/plain"
+                }
+            },
+            {
                 "kind": "python:ai",
                 "default": false,
                 "image": {

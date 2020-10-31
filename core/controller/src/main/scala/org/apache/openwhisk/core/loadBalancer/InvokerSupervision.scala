@@ -378,6 +378,7 @@ class InvokerActor(invokerInstance: InvokerInstanceId, controllerInstance: Contr
     // It is possible they are normal user actions as well. This can happen if such actions were in the
     // invoker queue or in progress while the invoker's status flipped to Unhealthy.
     if (result == InvocationFinishedResult.Success && stateName == Unhealthy) {
+      logging.info(this, s"Invoker Test Action")
       invokeTestAction()
     }
 
@@ -394,6 +395,7 @@ class InvokerActor(invokerInstance: InvokerInstanceId, controllerInstance: Contr
         gotoIfNotThere(Unresponsive)
       } else {
         gotoIfNotThere(Healthy)
+        //TODO: Probe for GPUs here?
       }
     }
   }

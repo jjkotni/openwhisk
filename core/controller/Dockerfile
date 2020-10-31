@@ -28,18 +28,16 @@ ENV SWAGGER_UI_DOWNLOAD_SHA256=3d7ef5ddc59e10f132fe99771498f0f1ba7a2cbfb9585f986
 # If you change the docker version here, it has implications on invoker runc support.
 # Docker server version and the invoker docker version must be the same to enable runc usage.
 # If this cannot be guaranteed, set `invoker_use_runc: false` in the ansible env.
-ENV DOCKER_VERSION=18.06.3-ce
+ENV DOCKER_VERSION=19.03.12
 
-RUN apk add --update openssl
+RUN apt-get -y install openssl wget gnupg
 
-# Uncomment to fetch latest version of docker instead: RUN wget -qO- https://get.docker.com | sh
+RUN wget -qO- https://get.docker.com | sh
 # Install docker client
-RUN curl -sSL -o docker-${DOCKER_VERSION}.tgz https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz && \
-    tar --strip-components 1 -xvzf docker-${DOCKER_VERSION}.tgz -C /usr/bin docker/docker && \
-    tar --strip-components 1 -xvzf docker-${DOCKER_VERSION}.tgz -C /usr/bin docker/docker-runc && \
-    rm -f docker-${DOCKER_VERSION}.tgz && \
-    chmod +x /usr/bin/docker && \
-    chmod +x /usr/bin/docker-runc
+# RUN curl -sSL -o docker-${DOCKER_VERSION}.tgz https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz && \
+#     tar --strip-components 1 -xvzf docker-${DOCKER_VERSION}.tgz -C /usr/bin docker/docker && \
+#     rm -f docker-${DOCKER_VERSION}.tgz && \
+RUN chmod +x /usr/bin/docker
 ##################################################################################################
 
 # Install swagger-ui
@@ -56,12 +54,23 @@ ADD build/distributions/controller.tar /
 COPY init.sh /
 RUN chmod +x init.sh
 
-RUN adduser -D -u ${UID} -h /home/${NOT_ROOT_USER} -s /bin/bash ${NOT_ROOT_USER}
+RUN adduser --disabled-password --disabled-login --gecos '' --uid ${UID} --home /home/${NOT_ROOT_USER} ${NOT_ROOT_USER}
 
 # It is possible to run as non root if you dont need invoker capabilities out of the controller today
 # When running it as a non-root user this has implications on the standard directory where runc stores its data.
 # The non-root user should have access on the directory and corresponding permission to make changes on it.
 #USER ${NOT_ROOT_USER}
+
+#Setting up NVIDIA container toolkit
+RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
+   && curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | apt-key add - \
+   && curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | tee /etc/apt/sources.list.d/nvidia-docker.list
+
+RUN apt-get update
+
+RUN apt-get install -y nvidia-container-runtime
+
+# RUN service docker restart
 
 EXPOSE 8080
 CMD ["./init.sh", "0"]

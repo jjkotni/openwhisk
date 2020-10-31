@@ -1,3 +1,7 @@
+import json
+import pickle
+
 def main(event):
-    print("Pilot!")
-    return {'statusCode': 200}
+    print('Hello World!')
+    result = {'body':'yoyo'}
+    return result

@@ -66,7 +66,8 @@ class DockerToActivationLogStore(system: ActorSystem) extends LogStore {
 
   /* "json-file" is the log-driver that writes out to file */
   override val containerParameters = Map("--log-driver" -> Set("json-file"),
-                                         "--security-opt" -> Set("seccomp=unconfined"))
+                                         "--security-opt" -> Set("seccomp=unconfined"),
+                                         "--gpus" -> Set("all"))
 
   /* As logs are already part of the activation record, just return that bit of it */
   override def fetchLogs(namespace: String,

@@ -67,7 +67,7 @@ whisk:
 #       {{ runtimes_local_image_prefix }} to skip docker pull in invoker even if the image is not part of the blackbox set
 #
 
-# skip_pull_runtimes: "True"
+skip_pull_runtimes: "True"
 manifestfile: "{{ manifest_file | default('/ansible/files/runtimes.json') }}"
 runtimesManifest: "{{ runtimes_manifest | default(lookup('file', openwhisk_home ~ '{{ manifestfile }}') | from_json) }}"
 # limit_action_time_std: "{{limit_action_time_std | default(1200000)}}"

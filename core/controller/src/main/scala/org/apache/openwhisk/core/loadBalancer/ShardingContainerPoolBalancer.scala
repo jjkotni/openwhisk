@@ -203,7 +203,6 @@ class ShardingContainerPoolBalancer(
       schedulingState.blackboxInvokers.count(_.status == Unresponsive))
     MetricEmitter.emitGaugeMetric(OFFLINE_INVOKER_BLACKBOX, schedulingState.blackboxInvokers.count(_.status == Offline))
   }
-
   /** State needed for scheduling. */
   val schedulingState = ShardingContainerPoolBalancerState()(lbConfig)
 
@@ -298,7 +297,7 @@ class ShardingContainerPoolBalancer(
         val timeLimitInfo = if (timeLimit == TimeLimit()) { "std" } else { "non-std" }
         logging.info(
           this,
-          s"scheduled activation ${msg.activationId}, action '${msg.action.asString}' ($actionType), ns '${msg.user.namespace.name.asString}', mem limit ${memoryLimit.megabytes} MB (${memoryLimitInfo}), time limit ${timeLimit.duration.toMillis} ms (${timeLimitInfo}) to ${invoker}")
+          s"II scheduled activation ${msg.activationId}, action '${msg.action.asString}' ($actionType), ns '${msg.user.namespace.name.asString}', mem limit ${memoryLimit.megabytes} MB (${memoryLimitInfo}), time limit ${timeLimit.duration.toMillis} ms (${timeLimitInfo}) to ${invoker}")
         val activationResult = setupActivation(msg, action, invoker)
         sendActivationToInvoker(messageProducer, msg, invoker).map(_ => activationResult)
       }
@@ -323,6 +322,19 @@ class ShardingContainerPoolBalancer(
       messageProducer,
       sendActivationToInvoker,
       Some(monitor))
+
+  override protected def processResult(aid: ActivationId,
+                                       tid: TransactionId,
+                                       response: Either[ActivationId, WhiskActivation]): Unit = {
+    super.processResult(aid, tid, response)
+    logging.info(this, s"Entered override method in Sharding Balancer with ${activationSlots.get(aid).get.namespaceId}")
+    /*Identify whether the action was invoked by controller*/
+    if(activationSlots.get(aid).get.namespaceId == InvokerPool.healthActionIdentity.namespace.uuid){
+      logging.info(this, s"healthActionIdentity: ${InvokerPool.healthActionIdentity}, InvokerName: ${activationSlots.get(aid).get.invokerName}")
+    }
+    /*Identify invoker name as follows: */
+   /*TODO: Identify data structure to hold GPU information*/
+  }
 
   override protected def releaseInvoker(invoker: InvokerInstanceId, entry: ActivationEntry) = {
     schedulingState.invokerSlots

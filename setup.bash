@@ -23,7 +23,7 @@ ansible-playbook couchdb.yml
 ansible-playbook initdb.yml
 ansible-playbook wipe.yml
 # After this initialize openwhisk
-ansible-playbook openwhisk.yml -e docker_image_prefix=openwhisk -e docker_image_tag=nightly -e pid_mode=host
+ansible-playbook openwhisk.yml -e docker_image_prefix=openwhisk -e docker_image_tag=nightly -e pid_mode=host -e invoker_use_runc=false -e whisk_loglevel=DEBUG
 # To install catalog of useful packages
 # ansible-playbook postdeploy.yml
 # To use API Gateway
@@ -38,4 +38,4 @@ wsk property set --auth `cat files/auth.guest`
 
 #Create a pilot action
 cd ..
-wsk -i action create pilot pilot.py
+wsk -i action update pilot pilot.py
