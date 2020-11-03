@@ -1,7 +1,9 @@
 import json
 import pickle
+import os
 
 def main(event):
-    print('Hello World!')
+    print(os.system('nvidia-smi'))
+    # print('Hello World!')
     result = {'body':'yoyo'}
     return result

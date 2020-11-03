@@ -49,7 +49,7 @@ class EventMessageTests extends FlatSpec with Matchers {
     start = Instant.now(),
     end = Instant.now(),
     response = ActivationResponse.success(Some(JsObject("res" -> JsNumber(1))), Some(42)),
-    annotations = Parameters("limits", ActionLimits(TimeLimit(1.second), MemoryLimit(128.MB), LogLimit(1.MB)).toJson) ++
+    annotations = Parameters("limits", ActionLimits(TimeLimit(1.second), MemoryLimit(128.MB),  GPUMemoryLimit(), LogLimit(1.MB)).toJson) ++
       Parameters(WhiskActivation.waitTimeAnnotation, 5.toJson) ++
       Parameters(WhiskActivation.initTimeAnnotation, 10.toJson) ++
       Parameters(WhiskActivation.kindAnnotation, "testkind") ++

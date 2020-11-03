@@ -51,7 +51,7 @@ class AcknowledgementMessageTests extends FlatSpec with Matchers with WhiskInsta
     start = nowInMillis(),
     end = nowInMillis(),
     response = ActivationResponse.success(Some(JsObject("res" -> JsNumber(1)))),
-    annotations = Parameters("limits", ActionLimits(TimeLimit(1.second), MemoryLimit(128.MB), LogLimit(1.MB)).toJson),
+    annotations = Parameters("limits", ActionLimits(TimeLimit(1.second), MemoryLimit(128.MB),  GPUMemoryLimit(), LogLimit(1.MB)).toJson),
     duration = Some(123))
 
   it should "serialize and deserialize a Result message with Left result" in {

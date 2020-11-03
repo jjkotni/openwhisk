@@ -768,6 +768,7 @@ class ActionsApiTests extends ControllerTestCommon with WhiskActionsApi {
         ActionLimitsOption(
           Some(action.limits.timeout),
           Some(action.limits.memory),
+          Some(action.limits.gpuMemory),
           Some(action.limits.logs),
           Some(action.limits.concurrency))))
     Put(s"$collectionPath/${action.name}", content) ~> Route.seal(routes(creds)) ~> check {
@@ -804,6 +805,7 @@ class ActionsApiTests extends ControllerTestCommon with WhiskActionsApi {
             ActionLimitsOption(
               Some(action.limits.timeout),
               Some(action.limits.memory),
+              Some(action.limits.gpuMemory),
               Some(action.limits.logs),
               Some(action.limits.concurrency))))
 
@@ -909,6 +911,7 @@ class ActionsApiTests extends ControllerTestCommon with WhiskActionsApi {
             ActionLimitsOption(
               Some(action.limits.timeout),
               Some(action.limits.memory),
+              Some(action.limits.gpuMemory),
               Some(action.limits.logs),
               Some(action.limits.concurrency))))
         val cacheKey = s"${CacheKey(action)}".replace("(", "\\(").replace(")", "\\)")
@@ -1000,6 +1003,7 @@ class ActionsApiTests extends ControllerTestCommon with WhiskActionsApi {
         ActionLimitsOption(
           Some(action.limits.timeout),
           Some(action.limits.memory),
+          Some(action.limits.gpuMemory),
           Some(action.limits.logs),
           Some(action.limits.concurrency))))
     val name = action.name
@@ -1086,6 +1090,7 @@ class ActionsApiTests extends ControllerTestCommon with WhiskActionsApi {
             ActionLimitsOption(
               Some(action.limits.timeout),
               Some(action.limits.memory),
+              Some(action.limits.gpuMemory),
               Some(action.limits.logs),
               Some(action.limits.concurrency))))
         val name = action.name
@@ -1134,6 +1139,7 @@ class ActionsApiTests extends ControllerTestCommon with WhiskActionsApi {
         ActionLimitsOption(
           Some(action.limits.timeout),
           Some(action.limits.memory),
+          Some(action.limits.gpuMemory),
           Some(action.limits.logs),
           Some(action.limits.concurrency))))
     val name = action.name
@@ -1193,6 +1199,7 @@ class ActionsApiTests extends ControllerTestCommon with WhiskActionsApi {
             ActionLimitsOption(
               Some(action.limits.timeout),
               Some(action.limits.memory),
+              Some(action.limits.gpuMemory),
               Some(action.limits.logs),
               Some(action.limits.concurrency))))
         val name = action.name
@@ -1260,6 +1267,7 @@ class ActionsApiTests extends ControllerTestCommon with WhiskActionsApi {
         ActionLimitsOption(
           Some(actionOldSchema.limits.timeout),
           Some(actionOldSchema.limits.memory),
+          Some(actionOldSchema.limits.gpuMemory),
           Some(actionOldSchema.limits.logs),
           Some(actionOldSchema.limits.concurrency))))
     val expectedPutLog =
@@ -1338,6 +1346,7 @@ class ActionsApiTests extends ControllerTestCommon with WhiskActionsApi {
         ActionLimitsOption(
           Some(TimeLimit(TimeLimit.MAX_DURATION)),
           Some(MemoryLimit(MemoryLimit.MAX_MEMORY)),
+          Some(GPUMemoryLimit(GPUMemoryLimit.MAX_MEMORY)),
           Some(LogLimit(LogLimit.MAX_LOGSIZE)),
           Some(ConcurrencyLimit(ConcurrencyLimit.MAX_CONCURRENT)))))
     put(entityStore, action)
@@ -1357,6 +1366,7 @@ class ActionsApiTests extends ControllerTestCommon with WhiskActionsApi {
           ActionLimits(
             content.limits.get.timeout.get,
             content.limits.get.memory.get,
+            content.limits.get.gpuMemory.get,
             content.limits.get.logs.get,
             content.limits.get.concurrency.get),
           version = action.version.upPatch,

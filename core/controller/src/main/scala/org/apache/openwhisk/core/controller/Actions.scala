@@ -448,6 +448,7 @@ trait WhiskActionsApi extends WhiskCollectionAPI with PostActionActivation with 
       ActionLimits(
         l.timeout getOrElse TimeLimit(),
         l.memory getOrElse MemoryLimit(),
+        l.gpuMemory getOrElse GPUMemoryLimit(),
         l.logs getOrElse LogLimit(),
         l.concurrency getOrElse ConcurrencyLimit())
     } getOrElse ActionLimits()
@@ -461,6 +462,8 @@ trait WhiskActionsApi extends WhiskCollectionAPI with PostActionActivation with 
         Parameters("_actions", JsArray(seq.components map { _.qualifiedNameWithLeadingSlash.toJson }))
       case _ => content.parameters getOrElse Parameters()
     }
+
+    logging.info(this, s"${entityName.name} exec: $exec")
 
     WhiskAction(
       entityName.path,
@@ -540,6 +543,7 @@ trait WhiskActionsApi extends WhiskCollectionAPI with PostActionActivation with 
       ActionLimits(
         l.timeout getOrElse action.limits.timeout,
         l.memory getOrElse action.limits.memory,
+        l.gpuMemory getOrElse action.limits.gpuMemory,
         l.logs getOrElse action.limits.logs,
         l.concurrency getOrElse action.limits.concurrency)
     } getOrElse action.limits

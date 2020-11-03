@@ -239,7 +239,11 @@ abstract class CommonLoadBalancer(config: WhiskConfig,
     // The activation will be removed from the activation slots later, when the completion message
     // is received (because the slot in the invoker is not yet free for new activations).
     activationPromises.remove(aid).foreach(_.trySuccess(response))
-    logging.info(this, s"received result ack for '$aid'")(tid)
+    if (activationSlots.get(aid).get.fullyQualifiedEntityName.name.toString.contains("invokerGPUCheckAction") &&
+        response.asInstanceOf[WhiskActivation].namespace == InvokerPool.healthActionIdentity.namespace.name.toPath) {
+      logging.info(this, s"GPUCheckAction returned: ${response}")
+    }
+    logging.info(this, s"received result ack for ${activationSlots.get(aid).get.fullyQualifiedEntityName.name} with aid:'$aid'")(tid)
   }
 
   protected def releaseInvoker(invoker: InvokerInstanceId, entry: ActivationEntry): Unit

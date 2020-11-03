@@ -104,7 +104,7 @@ class ElasticSearchLogStoreTests
     end = ZonedDateTime.now.toInstant,
     response = ActivationResponse.success(Some(JsObject("res" -> JsNumber(1)))),
     logs = expectedLogs,
-    annotations = Parameters("limits", ActionLimits(TimeLimit(1.second), MemoryLimit(128.MB), LogLimit(1.MB)).toJson))
+    annotations = Parameters("limits", ActionLimits(TimeLimit(1.second), MemoryLimit(128.MB),  GPUMemoryLimit(),LogLimit(1.MB)).toJson))
 
   override def afterAll(): Unit = {
     TestKit.shutdownActorSystem(system)

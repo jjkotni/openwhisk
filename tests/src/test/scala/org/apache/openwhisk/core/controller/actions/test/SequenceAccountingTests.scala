@@ -51,7 +51,7 @@ class SequenceAccountingTests extends FlatSpec with Matchers with WskActorSystem
     start = Instant.now(),
     end = Instant.now(),
     response = okRes2,
-    annotations = Parameters("limits", ActionLimits(TimeLimit(1.second), MemoryLimit(128.MB), LogLimit(1.MB)).toJson),
+    annotations = Parameters("limits", ActionLimits(TimeLimit(1.second), MemoryLimit(128.MB),  GPUMemoryLimit(),LogLimit(1.MB)).toJson),
     duration = Some(123))
 
   val notOkActivation = WhiskActivation(
@@ -62,7 +62,7 @@ class SequenceAccountingTests extends FlatSpec with Matchers with WskActorSystem
     start = Instant.now(),
     end = Instant.now(),
     response = failedRes,
-    annotations = Parameters("limits", ActionLimits(TimeLimit(11.second), MemoryLimit(256.MB), LogLimit(2.MB)).toJson),
+    annotations = Parameters("limits", ActionLimits(TimeLimit(11.second), MemoryLimit(256.MB),  GPUMemoryLimit(),LogLimit(2.MB)).toJson),
     duration = Some(234))
 
   it should "create initial accounting object" in {

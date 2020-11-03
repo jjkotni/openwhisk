@@ -847,36 +847,44 @@ class SchemaTests extends FlatSpec with BeforeAndAfter with ExecHelpers with Mat
     an[IllegalArgumentException] should be thrownBy ActionLimits(
       TimeLimit(TimeLimit.MIN_DURATION - 1.millisecond),
       MemoryLimit(),
+      GPUMemoryLimit(),
       LogLimit())
     an[IllegalArgumentException] should be thrownBy ActionLimits(
       TimeLimit(),
       MemoryLimit(MemoryLimit.MIN_MEMORY - 1.B),
+      GPUMemoryLimit(),
       LogLimit())
     an[IllegalArgumentException] should be thrownBy ActionLimits(
       TimeLimit(),
       MemoryLimit(),
+      GPUMemoryLimit(),
       LogLimit(LogLimit.MIN_LOGSIZE - 1.B))
     an[IllegalArgumentException] should be thrownBy ActionLimits(
       TimeLimit(),
       MemoryLimit(),
+      GPUMemoryLimit(),
       LogLimit(),
       ConcurrencyLimit(ConcurrencyLimit.MIN_CONCURRENT - 1))
 
     an[IllegalArgumentException] should be thrownBy ActionLimits(
       TimeLimit(TimeLimit.MAX_DURATION + 1.millisecond),
       MemoryLimit(),
+      GPUMemoryLimit(),
       LogLimit())
     an[IllegalArgumentException] should be thrownBy ActionLimits(
       TimeLimit(),
       MemoryLimit(MemoryLimit.MAX_MEMORY + 1.B),
+      GPUMemoryLimit(),
       LogLimit())
     an[IllegalArgumentException] should be thrownBy ActionLimits(
       TimeLimit(),
       MemoryLimit(),
+      GPUMemoryLimit(),
       LogLimit(LogLimit.MAX_LOGSIZE + 1.B))
     an[IllegalArgumentException] should be thrownBy ActionLimits(
       TimeLimit(),
       MemoryLimit(),
+      GPUMemoryLimit(),
       LogLimit(),
       ConcurrencyLimit(ConcurrencyLimit.MAX_CONCURRENT + 1))
   }

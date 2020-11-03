@@ -258,6 +258,7 @@ class ShardingContainerPoolBalancer(
 
     val isBlackboxInvocation = action.exec.pull
     val actionType = if (!isBlackboxInvocation) "managed" else "blackbox"
+//    action.limits.memory.megabytes
     val (invokersToUse, stepSizes) =
       if (!isBlackboxInvocation) (schedulingState.managedInvokers, schedulingState.managedStepSizes)
       else (schedulingState.blackboxInvokers, schedulingState.blackboxStepSizes)
@@ -327,7 +328,7 @@ class ShardingContainerPoolBalancer(
                                        tid: TransactionId,
                                        response: Either[ActivationId, WhiskActivation]): Unit = {
     super.processResult(aid, tid, response)
-    logging.info(this, s"Entered override method in Sharding Balancer with ${activationSlots.get(aid).get.namespaceId}")
+    logging.info(this, s"Entered override method in Sharding Balancer with ${activationSlots.get(aid).get.fullyQualifiedEntityName}")
     /*Identify whether the action was invoked by controller*/
     if(activationSlots.get(aid).get.namespaceId == InvokerPool.healthActionIdentity.namespace.uuid){
       logging.info(this, s"healthActionIdentity: ${InvokerPool.healthActionIdentity}, InvokerName: ${activationSlots.get(aid).get.invokerName}")

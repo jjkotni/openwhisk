@@ -1,3 +1,4 @@
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -101,7 +102,7 @@ class InvokerPool(childFactory: (ActorRefFactory, InvokerInstanceId) => ActorRef
                   sendActivationToInvoker: (ActivationMessage, InvokerInstanceId) => Future[RecordMetadata],
                   pingConsumer: MessageConsumer,
                   monitor: Option[ActorRef])
-    extends Actor {
+  extends Actor {
 
   import InvokerState._
 
@@ -249,6 +250,18 @@ object InvokerPool {
         throw new IllegalStateException(
           "cannot create test action for invoker health because runtime manifest is not valid")
       }
+    InvokerPool
+      .gpuCheckAction(controllerInstance)
+      .map {
+        // Await the creation of the test action; on failure, this will abort the constructor which should
+        // in turn abort the startup of the controller.
+        a =>
+          Await.result(createTestActionForInvokerHealth(entityStore, a), 1.minute)
+      }
+      .orElse {
+        throw new IllegalStateException(
+          "cannot create test action for invoker health because runtime manifest is not valid")
+      }
   }
 
   def props(f: (ActorRefFactory, InvokerInstanceId) => ActorRef,
@@ -274,6 +287,51 @@ object InvokerPool {
         exec = CodeExecAsString(manifest, """function main(params) { return params; }""", None),
         limits = ActionLimits(memory = MemoryLimit(MemoryLimit.MIN_MEMORY)))
     }
+
+  def gpuCheckAction(i: ControllerInstanceId): Option[WhiskAction] = {
+    ExecManifest.runtimesManifest.resolveDefaultRuntime("python:mlperf").map { manifest =>
+      new WhiskAction(
+        namespace = healthActionIdentity.namespace.name.toPath,
+        name = EntityName(s"invokerGPUCheckAction${i.asString}"),
+        exec = CodeExecAsString(manifest, """
+import subprocess
+
+def main(params):
+    process = subprocess.Popen(['nvidia-smi', '-L'],
+                     stdout=subprocess.PIPE,
+                     stderr=subprocess.PIPE,
+                     universal_newlines=True)
+    stdout, stderr = process.communicate()
+    gpus = stdout.strip().split('\n')
+    response = {}
+    for gpu in gpus:
+        info = gpu.split(':')
+        token, gpu_id = info[0].split()
+        process = subprocess.Popen(['nvidia-smi',
+                                    '--query-gpu=memory.free',
+                                    '--format=csv,noheader',
+                                    '-i {}'.format(gpu_id)],
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE,
+                         universal_newlines=True)
+        stdout, stderr = process.communicate()
+        memory, unit = stdout.strip().split()
+        memory = int(memory)
+        if unit == 'GiB':
+            memory *= 1024
+        elif unit == 'KiB':
+            memory /= 1024
+        elif unit == 'MiB':
+            memory *= 1
+        else:
+            raise 'Undefined memory unit'
+
+        response[int(gpu_id)] = memory
+    return response
+""", None),
+        limits = ActionLimits(memory = MemoryLimit(MemoryLimit.MIN_MEMORY), gpuMemory = GPUMemoryLimit(GPUMemoryLimit.MIN_MEMORY)))
+    }
+  }
 }
 
 /**
@@ -394,6 +452,8 @@ class InvokerActor(invokerInstance: InvokerInstanceId, controllerInstance: Contr
       } else if (entries.count(_ == InvocationFinishedResult.Timeout) > InvokerActor.bufferErrorTolerance) {
         gotoIfNotThere(Unresponsive)
       } else {
+        logging.info(this, s"Invoker GPU Check Action")
+        invokeGPUCheckAction()
         gotoIfNotThere(Healthy)
         //TODO: Probe for GPUs here?
       }
@@ -421,6 +481,28 @@ class InvokerActor(invokerInstance: InvokerInstanceId, controllerInstance: Contr
         initArgs = Set.empty)
 
       context.parent ! ActivationRequest(activationMessage, invokerInstance)
+    }
+  }
+
+  private def invokeGPUCheckAction() = {
+    InvokerPool.gpuCheckAction(controllerInstance).map { action =>
+      val activationMessage = ActivationMessage(
+        // Use the sid of the InvokerSupervisor as tid
+        transid = transid,
+        action = action.fullyQualifiedName(true),
+        // Use empty DocRevision to force the invoker to pull the action from db all the time
+        revision = DocRevision.empty,
+        user = InvokerPool.healthActionIdentity,
+        // Create a new Activation ID for this activation
+        activationId = new ActivationIdGenerator {}.make(),
+        rootControllerIndex = controllerInstance,
+        blocking = true,
+        content = None,
+        initArgs = Set.empty)
+
+      context.parent ! ActivationRequest(activationMessage, invokerInstance)
+//      val activationResult = setupActivation(activationMessage, action, invokerInstance)
+//      sendActivationToInvoker(messageProducer, msg, invoker).map(_ => activationResult)
     }
   }
 
