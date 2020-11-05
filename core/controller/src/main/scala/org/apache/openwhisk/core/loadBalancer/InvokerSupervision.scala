@@ -79,6 +79,7 @@ object InvocationFinishedResult {
 }
 
 case class ActivationRequest(msg: ActivationMessage, invoker: InvokerInstanceId)
+case class ActivationSetup(msg: ActivationMessage, action: ExecutableWhiskActionMetaData, invoker: InvokerInstanceId)
 case class InvocationFinishedMessage(invokerInstance: InvokerInstanceId, result: InvocationFinishedResult)
 
 // Sent to a monitor if the state changed
@@ -100,6 +101,7 @@ final case class InvokerInfo(buffer: RingBuffer[InvocationFinishedResult])
  */
 class InvokerPool(childFactory: (ActorRefFactory, InvokerInstanceId) => ActorRef,
                   sendActivationToInvoker: (ActivationMessage, InvokerInstanceId) => Future[RecordMetadata],
+                  setupActivation: (ActivationMessage, ExecutableWhiskActionMetaData, InvokerInstanceId) => Future[Either[ActivationId, WhiskActivation]],
                   pingConsumer: MessageConsumer,
                   monitor: Option[ActorRef])
   extends Actor {
@@ -151,6 +153,7 @@ class InvokerPool(childFactory: (ActorRefFactory, InvokerInstanceId) => ActorRef
 
     // this is only used for the internal test action which enabled an invoker to become healthy again
     case msg: ActivationRequest => sendActivationToInvoker(msg.msg, msg.invoker).pipeTo(sender)
+    case msg: ActivationSetup   => setupActivation(msg.msg, msg.action, msg.invoker)
   }
 
   def logStatus(): Unit = {
@@ -266,9 +269,10 @@ object InvokerPool {
 
   def props(f: (ActorRefFactory, InvokerInstanceId) => ActorRef,
             p: (ActivationMessage, InvokerInstanceId) => Future[RecordMetadata],
+            q: (ActivationMessage, ExecutableWhiskActionMetaData, InvokerInstanceId) => Future[Either[ActivationId, WhiskActivation]],
             pc: MessageConsumer,
             m: Option[ActorRef] = None): Props = {
-    Props(new InvokerPool(f, p, pc, m))
+    Props(new InvokerPool(f, p, q, pc, m))
   }
 
   /** A stub identity for invoking the test action. This does not need to be a valid identity. */
@@ -488,7 +492,7 @@ class InvokerActor(invokerInstance: InvokerInstanceId, controllerInstance: Contr
     InvokerPool.gpuCheckAction(controllerInstance).map { action =>
       val activationMessage = ActivationMessage(
         // Use the sid of the InvokerSupervisor as tid
-        transid = transid,
+        transid = TransactionId.invokerGPUCheck,
         action = action.fullyQualifiedName(true),
         // Use empty DocRevision to force the invoker to pull the action from db all the time
         revision = DocRevision.empty,
@@ -500,9 +504,12 @@ class InvokerActor(invokerInstance: InvokerInstanceId, controllerInstance: Contr
         content = None,
         initArgs = Set.empty)
 
+      //Creating metadata required for setup
+      val optMainField : Option[String] = None
+      val exec = CodeExecMetaDataAsString(ExecManifest.runtimesManifest.resolveDefaultRuntime("python:mlperf").get, false, optMainField)
+      val metadata = ExecutableWhiskActionMetaData(action.namespace, action.name, exec, action.parameters, action.limits, action.version, action.publish, action.parameters)
+      context.parent ! ActivationSetup(activationMessage, metadata, invokerInstance)
       context.parent ! ActivationRequest(activationMessage, invokerInstance)
-//      val activationResult = setupActivation(activationMessage, action, invokerInstance)
-//      sendActivationToInvoker(messageProducer, msg, invoker).map(_ => activationResult)
     }
   }
 

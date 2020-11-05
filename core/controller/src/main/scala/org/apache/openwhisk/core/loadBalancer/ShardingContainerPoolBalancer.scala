@@ -322,19 +322,17 @@ class ShardingContainerPoolBalancer(
       messagingProvider,
       messageProducer,
       sendActivationToInvoker,
-      Some(monitor))
+      setupActivation,
+     Some(monitor))
 
   override protected def processResult(aid: ActivationId,
                                        tid: TransactionId,
                                        response: Either[ActivationId, WhiskActivation]): Unit = {
-    super.processResult(aid, tid, response)
-    logging.info(this, s"Entered override method in Sharding Balancer with ${activationSlots.get(aid).get.fullyQualifiedEntityName}")
-    /*Identify whether the action was invoked by controller*/
-    if(activationSlots.get(aid).get.namespaceId == InvokerPool.healthActionIdentity.namespace.uuid){
-      logging.info(this, s"healthActionIdentity: ${InvokerPool.healthActionIdentity}, InvokerName: ${activationSlots.get(aid).get.invokerName}")
+    if (tid == TransactionId.invokerGPUCheck){
+      /*TODO: Identify data structure to hold GPU information*/
+      logging.info(this, s"[ProcessResult][$aid] received right: ${response.isRight} with result: ${response.right.get.response.result.get}")(tid)
     }
-    /*Identify invoker name as follows: */
-   /*TODO: Identify data structure to hold GPU information*/
+    super.processResult(aid, tid, response)
   }
 
   override protected def releaseInvoker(invoker: InvokerInstanceId, entry: ActivationEntry) = {
@@ -357,6 +355,7 @@ object ShardingContainerPoolBalancer extends LoadBalancerProvider {
         messagingProvider: MessagingProvider,
         messagingProducer: MessageProducer,
         sendActivationToInvoker: (MessageProducer, ActivationMessage, InvokerInstanceId) => Future[RecordMetadata],
+        setupActivation: (ActivationMessage, ExecutableWhiskActionMetaData, InvokerInstanceId) => Future[Either[ActivationId, WhiskActivation]],
         monitor: Option[ActorRef]): ActorRef = {
 
         InvokerPool.prepare(instance, WhiskEntityStore.datastore())
@@ -365,6 +364,7 @@ object ShardingContainerPoolBalancer extends LoadBalancerProvider {
           InvokerPool.props(
             (f, i) => f.actorOf(InvokerActor.props(i, instance)),
             (m, i) => sendActivationToInvoker(messagingProducer, m, i),
+            (m, a, i) => setupActivation(m, a, i),
             messagingProvider.getConsumer(whiskConfig, s"health${instance.asString}", "health", maxPeek = 128),
             monitor))
       }

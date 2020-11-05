@@ -22,7 +22,8 @@ import org.apache.kafka.clients.producer.RecordMetadata
 import org.apache.openwhisk.core.connector.ActivationMessage
 import org.apache.openwhisk.core.connector.MessageProducer
 import org.apache.openwhisk.core.connector.MessagingProvider
-import org.apache.openwhisk.core.entity.InvokerInstanceId
+import org.apache.openwhisk.core.entity.{ActivationId, ExecutableWhiskActionMetaData, InvokerInstanceId, WhiskActivation}
+
 import scala.concurrent.Future
 
 trait InvokerPoolFactory {
@@ -31,5 +32,6 @@ trait InvokerPoolFactory {
     messagingProvider: MessagingProvider,
     messagingProducer: MessageProducer,
     sendActivationToInvoker: (MessageProducer, ActivationMessage, InvokerInstanceId) => Future[RecordMetadata],
+    setupActivation: (ActivationMessage, ExecutableWhiskActionMetaData, InvokerInstanceId) => Future[Either[ActivationId, WhiskActivation]],
     monitor: Option[ActorRef]): ActorRef
 }

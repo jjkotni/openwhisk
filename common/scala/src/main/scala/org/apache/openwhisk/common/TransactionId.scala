@@ -240,6 +240,7 @@ object TransactionId {
   val dispatcher = TransactionId(systemPrefix + "dispatcher") // Kafka message dispatcher
   val loadbalancer = TransactionId(systemPrefix + "loadbalancer") // Loadbalancer thread
   val invokerHealth = TransactionId(systemPrefix + "invokerHealth") // Invoker supervision
+  val invokerGPUCheck = TransactionId(systemPrefix + "invokerGPUCheck") // Invoker supervision
   val controller = TransactionId(systemPrefix + "controller") // Controller startup
   val dbBatcher = TransactionId(systemPrefix + "dbBatcher") // Database batcher
   val actionHealthPing = TransactionId(systemPrefix + "actionHealth")

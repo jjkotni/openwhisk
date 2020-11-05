@@ -111,7 +111,8 @@ class InvokerSupervisionTests
     val childFactory = (f: ActorRefFactory, instance: InvokerInstanceId) => children.dequeue()
 
     val sendActivationToInvoker = stubFunction[ActivationMessage, InvokerInstanceId, Future[RecordMetadata]]
-    val supervisor = system.actorOf(InvokerPool.props(childFactory, sendActivationToInvoker, pC))
+    val setupActivation = stubFunction[ActivationMessage, ExecutableWhiskActionMetaData, InvokerInstanceId, Future[Either[ActivationId, WhiskActivation]]]
+    val supervisor = system.actorOf(InvokerPool.props(childFactory, sendActivationToInvoker,setupActivation, pC))
 
     within(timeout.duration) {
       // create first invoker
@@ -150,8 +151,8 @@ class InvokerSupervisionTests
     val invokerName = s"invoker${invokerInstance.toInt}"
     val childFactory = (f: ActorRefFactory, instance: InvokerInstanceId) => invoker.ref
     val sendActivationToInvoker = stubFunction[ActivationMessage, InvokerInstanceId, Future[RecordMetadata]]
-
-    val supervisor = system.actorOf(InvokerPool.props(childFactory, sendActivationToInvoker, pC))
+    val setupActivation = stubFunction[ActivationMessage, ExecutableWhiskActionMetaData, InvokerInstanceId, Future[Either[ActivationId, WhiskActivation]]]
+    val supervisor = system.actorOf(InvokerPool.props(childFactory, sendActivationToInvoker,setupActivation, pC))
 
     within(timeout.duration) {
       // Create one invoker
@@ -178,8 +179,8 @@ class InvokerSupervisionTests
     val sendActivationToInvoker = LoggedFunction { (a: ActivationMessage, b: InvokerInstanceId) =>
       Future.successful(new RecordMetadata(new TopicPartition(invokerName, 0), 0L, 0L, 0L, Long.box(0L), 0, 0))
     }
-
-    val supervisor = system.actorOf(InvokerPool.props(childFactory, sendActivationToInvoker, pC))
+    val setupActivation = stubFunction[ActivationMessage, ExecutableWhiskActionMetaData, InvokerInstanceId, Future[Either[ActivationId, WhiskActivation]]]
+    val supervisor = system.actorOf(InvokerPool.props(childFactory, sendActivationToInvoker,setupActivation, pC))
 
     // Send ActivationMessage to InvokerPool
     val uuid = UUID()
@@ -342,7 +343,8 @@ class InvokerSupervisionTests
     val childFactory = (f: ActorRefFactory, instance: InvokerInstanceId) => children.dequeue()
 
     val sendActivationToInvoker = stubFunction[ActivationMessage, InvokerInstanceId, Future[RecordMetadata]]
-    val supervisor = system.actorOf(InvokerPool.props(childFactory, sendActivationToInvoker, pC))
+    val setupActivation = stubFunction[ActivationMessage, ExecutableWhiskActionMetaData, InvokerInstanceId, Future[Either[ActivationId, WhiskActivation]]]
+    val supervisor = system.actorOf(InvokerPool.props(childFactory, sendActivationToInvoker,setupActivation, pC))
 
     val invokerInstance = InvokerInstanceId(0, Some("10.x.x.x"), Some("invoker-xyz"), userMemory = defaultUserMemory)
 
@@ -365,7 +367,8 @@ class InvokerSupervisionTests
     val childFactory = (f: ActorRefFactory, instance: InvokerInstanceId) => children.dequeue()
 
     val sendActivationToInvoker = stubFunction[ActivationMessage, InvokerInstanceId, Future[RecordMetadata]]
-    val supervisor = system.actorOf(InvokerPool.props(childFactory, sendActivationToInvoker, pC))
+    val setupActivation = stubFunction[ActivationMessage, ExecutableWhiskActionMetaData, InvokerInstanceId, Future[Either[ActivationId, WhiskActivation]]]
+    val supervisor = system.actorOf(InvokerPool.props(childFactory, sendActivationToInvoker,setupActivation, pC))
 
     val invokerInstance = InvokerInstanceId(0, Some("10.x.x.x"), Some("invoker-xyz"), userMemory = defaultUserMemory)
 

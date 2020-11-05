@@ -205,18 +205,18 @@ abstract class CommonLoadBalancer(config: WhiskConfig,
   protected[loadBalancer] def processAcknowledgement(bytes: Array[Byte]): Future[Unit] = Future {
     val raw = new String(bytes, StandardCharsets.UTF_8)
     AcknowledegmentMessage.parse(raw) match {
-      case Success(acknowledegment) =>
-        acknowledegment.isSlotFree.foreach { instance =>
+      case Success(acknowledgment) =>
+        acknowledgment.isSlotFree.foreach { instance =>
           processCompletion(
-            acknowledegment.activationId,
-            acknowledegment.transid,
+            acknowledgment.activationId,
+            acknowledgment.transid,
             forced = false,
-            isSystemError = acknowledegment.isSystemError.getOrElse(false),
+            isSystemError = acknowledgment.isSystemError.getOrElse(false),
             instance)
         }
 
-        acknowledegment.result.foreach { response =>
-          processResult(acknowledegment.activationId, acknowledegment.transid, response)
+        acknowledgment.result.foreach { response =>
+          processResult(acknowledgment.activationId, acknowledgment.transid, response)
         }
 
         activationFeed ! MessageFeed.Processed
@@ -239,11 +239,6 @@ abstract class CommonLoadBalancer(config: WhiskConfig,
     // The activation will be removed from the activation slots later, when the completion message
     // is received (because the slot in the invoker is not yet free for new activations).
     activationPromises.remove(aid).foreach(_.trySuccess(response))
-    if (activationSlots.get(aid).get.fullyQualifiedEntityName.name.toString.contains("invokerGPUCheckAction") &&
-        response.asInstanceOf[WhiskActivation].namespace == InvokerPool.healthActionIdentity.namespace.name.toPath) {
-      logging.info(this, s"GPUCheckAction returned: ${response}")
-    }
-    logging.info(this, s"received result ack for ${activationSlots.get(aid).get.fullyQualifiedEntityName.name} with aid:'$aid'")(tid)
   }
 
   protected def releaseInvoker(invoker: InvokerInstanceId, entry: ActivationEntry): Unit
